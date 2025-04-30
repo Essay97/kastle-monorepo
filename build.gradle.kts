@@ -5,15 +5,11 @@ plugins {
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
-    group = "com.example.textadventure"
+    group = "com.saggiodev"
     version = "1.0.0"
 
     repositories {
         mavenCentral()
-    }
-
-    dependencies {
-        // puoi mettere qui dipendenze comuni se ce ne sono
     }
 }
 

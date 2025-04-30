@@ -1,0 +1,27 @@
+CREATE TABLE installedGames (
+    id INTEGER PRIMARY KEY NOT NULL,
+    gameName TEXT UNIQUE NOT NULL,
+    mainClass TEXT UNIQUE NOT NULL,
+    fileName TEXT UNIQUE NOT NULL
+);
+
+insert:
+INSERT INTO installedGames (gameName, mainClass, fileName)
+VALUES (?, ?, ?);
+
+getAll:
+SELECT * FROM installedGames;
+
+getFilteredGames:
+SELECT * FROM installedGames
+WHERE gameName = ?
+OR mainClass = ?
+OR fileName = ?;
+
+getByGameName:
+SELECT * FROM installedGames
+WHERE gameName = ?;
+
+deleteByGameName:
+DELETE FROM installedGames
+WHERE gameName = ?;

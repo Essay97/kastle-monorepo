@@ -1,4 +1,11 @@
 rootProject.name = "kastle-monorepo"
 
-include("api", "engine", "dsl", "sample-game")
+include("api", "engine", "sample-game")
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
 
