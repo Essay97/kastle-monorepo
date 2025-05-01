@@ -6,7 +6,7 @@ subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     group = "com.saggiodev"
-    version = "1.0.0"
+    version = "0.1.0"
 
     repositories {
         mavenCentral()

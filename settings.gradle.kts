@@ -1,4 +1,4 @@
-rootProject.name = "kastle-monorepo"
+rootProject.name = "kastle"
 
 include("api", "engine", "sample-game")
 

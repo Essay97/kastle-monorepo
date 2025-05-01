@@ -1,6 +1,6 @@
 plugins {
     id("app.cash.sqldelight") version "2.0.2"
-    id("io.deepmedia.tools.deployer") version "0.16.0"
+    id("io.deepmedia.tools.deployer") version "0.18.0"
 }
 
 repositories {
@@ -23,7 +23,7 @@ dependencies {
     implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
 }
 
-publishing {
+/*publishing {
     publications {
         create<MavenPublication>("kastle-api") {
             from(components["java"])
@@ -37,7 +37,7 @@ publishing {
             url = uri(System.getProperty("user.home") + "/localMavenRepo")
         }
     }
-}
+}*/
 
 
 deployer {
@@ -51,6 +51,7 @@ deployer {
         license(apache2)
         developer("Enrico Saggiorato", "saggiorato.enrico@gmail.com")
         groupId = "com.saggiodev"
+        artifactId = "kastle-api"
     }
     centralPortalSpec {
         signing.key = secret("SIGNING_KEY")
