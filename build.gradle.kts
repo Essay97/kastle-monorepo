@@ -1,5 +1,4 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 
 plugins {
     kotlin("jvm") version "2.1.10" apply false
@@ -18,12 +17,8 @@ subprojects {
         mavenCentral()
     }
 
-    plugins.withId("org.jetbrains.kotlin.jvm") {
-        tasks.withType<KotlinCompile>().configureEach {
-            compilerOptions {
-                jvmTarget = JvmTarget.JVM_1_8
-            }
-        }
+    extensions.configure<KotlinJvmProjectExtension> {
+        jvmToolchain(11)
     }
 }
 
