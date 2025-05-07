@@ -12,14 +12,19 @@ pipeline {
 
   stages {
     stage('Build') {
-      sh './gradlew :engine:build'
+      steps {
+        sh './gradlew :engine:build'
+      }
+      
     }
 
     stage('Deploy') {
-      script {
-        def appVersion = sh returnStdout: true, script: './gradlew -q appVersion'
+      steps {
+        script {
+          def appVersion = sh returnStdout: true, script: './gradlew -q appVersion'
 
-        sh "sudo cp build/distributions/engine-${appVersion}/engine-${appVersion}.zip /var/www/kastle-docs/attachments/kastle-${appVersion}.zip"
+          sh "sudo cp build/distributions/engine-${appVersion}/engine-${appVersion}.zip /var/www/kastle-docs/attachments/kastle-${appVersion}.zip"
+        }
       }
     }
 
