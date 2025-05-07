@@ -1,0 +1,32 @@
+pipeline {
+  agent any
+
+  parameters {
+    gitParameter type: 'PT_BRANCH_TAG',
+                 name: 'TAG_OR_BRANCH',
+                 defaultValue: 'origin/main',
+                 selectedValue: 'NONE',
+                 sortMode: 'DESCENDING_SMART',
+                 tagFilter: '*'
+  }
+
+  stages {
+    stage('Build') {
+      sh './gradlew :engine:build'
+    }
+
+    stage('Deploy') {
+      script {
+        def appVersion = sh returnStdout: true, script: './gradlew -q appVersion'
+
+        sh "sudo cp build/distributions/engine-${appVersion}/engine-${appVersion}.zip /var/www/kastle-docs/attachments/kastle-${appVersion}.zip"
+      }
+    }
+
+    stage('Cleanup') {
+      steps {
+        cleanWs cleanWhenAborted: false, cleanWhenFailure: false, cleanWhenNotBuilt: false, cleanWhenUnstable: false
+      }
+    }
+  }
+}

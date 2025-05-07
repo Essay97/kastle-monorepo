@@ -21,6 +21,7 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
     implementation("io.arrow-kt:arrow-core:2.1.0")
     implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
+    implementation("org.slf4j:slf4j-nop:1.7.36")
 }
 
 /*publishing {
@@ -42,7 +43,11 @@ dependencies {
 
 deployer {
     content {
-        kotlinComponents()
+        kotlinComponents {
+            emptyDocs()
+            kotlinSources()
+        }
+
     }
     projectInfo {
         description = "Core logic and DSL for the Kastle text adventure engine"
