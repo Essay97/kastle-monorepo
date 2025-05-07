@@ -21,7 +21,8 @@ pipeline {
     stage('Deploy') {
       steps {
         script {
-          def appVersion = sh returnStdout: true, script: './gradlew -q appVersion'
+          def output = sh returnStdout: true, script: './gradlew -q appVersion'
+          def appVersion = output.trim()
 
           sh "sudo cp build/distributions/engine-${appVersion}/engine-${appVersion}.zip /var/www/kastle-docs/attachments/kastle-${appVersion}.zip"
         }
