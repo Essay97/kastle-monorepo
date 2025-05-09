@@ -2,8 +2,11 @@ plugins {
     application
 }
 
+version = "0.1.0"
+
 application {
     mainClass.set("com.saggiodev.kastle.engine.MainKt")
+    applicationName = "kastle"
 }
 
 dependencies {
@@ -12,3 +15,5 @@ dependencies {
     implementation("com.varabyte.kotter:kotter-jvm:1.2.1")
     implementation("io.arrow-kt:arrow-core:2.1.0")
 }
+
+

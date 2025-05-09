@@ -3,6 +3,8 @@ plugins {
     id("io.deepmedia.tools.deployer") version "0.18.0"
 }
 
+version = "0.1.1"
+
 repositories {
     google()
     mavenCentral()
@@ -23,23 +25,6 @@ dependencies {
     implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
     implementation("org.slf4j:slf4j-nop:1.7.36")
 }
-
-/*publishing {
-    publications {
-        create<MavenPublication>("kastle-api") {
-            from(components["java"])
-            artifactId = "api"
-        }
-    }
-
-    repositories {
-        maven {
-            name = "local"
-            url = uri(System.getProperty("user.home") + "/localMavenRepo")
-        }
-    }
-}*/
-
 
 deployer {
     content {
@@ -63,5 +48,8 @@ deployer {
         signing.password = secret("SIGNING_PASSPHRASE")
         auth.user = secret("UPLOAD_USERNAME")
         auth.password = secret("UPLOAD_PASSWORD")
+    }
+    localSpec {
+        directory = file("/Users/enrico/maven-local")
     }
 }
