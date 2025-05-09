@@ -1,0 +1,33 @@
+pipeline {
+  agent any
+
+  parameters {
+    gitParameter type: 'PT_BRANCH_TAG',
+                 name: 'TAG_OR_BRANCH',
+                 defaultValue: 'origin/main',
+                 selectedValue: 'NONE',
+                 sortMode: 'DESCENDING_SMART',
+                 tagFilter: '*'
+  }
+
+  environment {
+    UPLOAD_USERNAME = credentials('UPLOAD_USERNAME')
+    UPLOAD_PASSWORD = credentials('UPLOAD_PASSWORD')
+    SIGNING_KEY = credentials('SIGNING_KEY')
+    SIGNING_PASSPHRASE = credentials('SIGNING_PASSPHRASE')
+  }
+
+  stages {
+    stage('Deploy to Maven Central') {
+      steps {
+        sh './gradlew :api:deployCentralPortal'
+      }
+    }
+
+    stage('Cleanup') {
+      steps {
+        cleanWs cleanWhenAborted: false, cleanWhenFailure: false, cleanWhenNotBuilt: false, cleanWhenUnstable: false
+      }
+    }
+  }
+}
