@@ -15,18 +15,17 @@ pipeline {
     UPLOAD_PASSWORD = credentials('UPLOAD_PASSWORD')
     SIGNING_KEY = credentials('SIGNING_KEY')
     SIGNING_PASSPHRASE = credentials('SIGNING_PASSPHRASE')
+    LOCAL_PROPERTIES_FILE = credentials('local.properties')
   }
 
   stages {
     stage('Deploy to Maven Central') {
       steps {
-        sh """
-          ./gradlew :api:deployCentralPortal \
-          -PUPLOAD_USERNAME=${UPLOAD_USERNAME} \
-          -PUPLOAD_PASSWORD=${UPLOAD_PASSWORD} \
-          -PSIGNING_KEY=${SIGNING_KEY} \
-          -PSIGNING_PASSPHRASE=${SIGNING_PASSPHRASE}
-        """
+        sh '''
+          cp $LOCAL_PROPERTIES_FILE local.properties
+          ./gradlew :api:deployCentralPortal
+          rm -f local.properties
+        '''
       }
     }
 
