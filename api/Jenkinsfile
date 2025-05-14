@@ -20,7 +20,13 @@ pipeline {
   stages {
     stage('Deploy to Maven Central') {
       steps {
-        sh './gradlew :api:deployCentralPortal'
+        sh """
+          ./gradlew :api:deployCentralPortal \
+          -PUPLOAD_USERNAME=${UPLOAD_USERNAME} \
+          -PUPLOAD_PASSWORD=${UPLOAD_PASSWORD} \
+          -PSIGNING_KEY=${SIGNING_KEY} \
+          -PSIGNING_PASSPHRASE=${SIGNING_PASSPHRASE}
+        """
       }
     }
 
