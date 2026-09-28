@@ -1,38 +1,56 @@
 pipeline {
   agent any
 
-  parameters {
-    gitParameter type: 'PT_BRANCH_TAG',
-                 name: 'TAG_OR_BRANCH',
-                 defaultValue: 'origin/main',
-                 selectedValue: 'NONE',
-                 sortMode: 'DESCENDING_SMART',
-                 tagFilter: '*'
+  options {
+    skipDefaultCheckout()
+    disableConcurrentBuilds()
   }
 
-  environment {
-    UPLOAD_USERNAME = credentials('UPLOAD_USERNAME')
-    UPLOAD_PASSWORD = credentials('UPLOAD_PASSWORD')
-    SIGNING_KEY = credentials('SIGNING_KEY')
-    SIGNING_PASSPHRASE = credentials('SIGNING_PASSPHRASE')
-    LOCAL_PROPERTIES_FILE = credentials('local.properties')
+  parameters {
+    string(name: 'RELEASE_TAG', defaultValue: '', description: 'Existing release tag, e.g. v0.1.2')
   }
 
   stages {
-    stage('Deploy to Maven Central') {
+    stage('Checkout release') {
       steps {
-        sh '''
-          cp $LOCAL_PROPERTIES_FILE local.properties
-          ./gradlew :api:deployCentralPortal
-          rm -f local.properties
-        '''
+        script {
+          if (!(params.RELEASE_TAG ==~ /v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/)) {
+            error('RELEASE_TAG must be a stable version tag such as v0.1.2')
+          }
+          deleteDir()
+          checkout scmGit(
+            branches: [[name: "refs/tags/${params.RELEASE_TAG}"]],
+            userRemoteConfigs: scm.userRemoteConfigs
+          )
+        }
+        sh 'sh scripts/check-release.sh "$RELEASE_TAG"'
       }
     }
 
-    stage('Cleanup') {
+    stage('Verify and build') {
       steps {
-        cleanWs cleanWhenAborted: false, cleanWhenFailure: false, cleanWhenNotBuilt: false, cleanWhenUnstable: false
+        sh 'python3 -B -m unittest discover -s scripts -p "test_*.py"'
+        sh './gradlew --no-daemon clean test build'
       }
+    }
+
+    stage('Publish API') {
+      environment {
+        UPLOAD_USERNAME = credentials('UPLOAD_USERNAME')
+        UPLOAD_PASSWORD = credentials('UPLOAD_PASSWORD')
+        SIGNING_KEY = credentials('SIGNING_KEY')
+        SIGNING_PASSPHRASE = credentials('SIGNING_PASSPHRASE')
+      }
+      steps {
+        sh './gradlew --no-daemon :api:deployCentralPortal'
+      }
+    }
+
+  }
+
+  post {
+    always {
+      cleanWs()
     }
   }
 }

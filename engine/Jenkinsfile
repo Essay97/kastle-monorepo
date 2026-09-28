@@ -1,37 +1,62 @@
 pipeline {
   agent any
 
+  options {
+    skipDefaultCheckout()
+    disableConcurrentBuilds()
+  }
+
   parameters {
-    gitParameter type: 'PT_BRANCH_TAG',
-                 name: 'TAG_OR_BRANCH',
-                 defaultValue: 'origin/main',
-                 selectedValue: 'NONE',
-                 sortMode: 'DESCENDING_SMART',
-                 tagFilter: '*'
+    string(name: 'RELEASE_TAG', defaultValue: '', description: 'Existing release tag, e.g. v0.1.2')
   }
 
   stages {
-    stage('Build') {
-      steps {
-        sh './gradlew :engine:build'
-      }
-    }
-
-    stage('Deploy') {
+    stage('Checkout release') {
       steps {
         script {
-          def output = sh returnStdout: true, script: './gradlew -q appVersion'
-          def appVersion = output.trim()
-
-          sh "sudo cp engine/build/distributions/kastle-${appVersion}.zip /var/www/kastle-docs/attachments/kastle-${appVersion}.zip"
+          if (!(params.RELEASE_TAG ==~ /v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)/)) {
+            error('RELEASE_TAG must be a stable version tag such as v0.1.2')
+          }
+          deleteDir()
+          checkout scmGit(
+            branches: [[name: "refs/tags/${params.RELEASE_TAG}"]],
+            userRemoteConfigs: scm.userRemoteConfigs
+          )
         }
+        sh 'sh scripts/check-release.sh "$RELEASE_TAG"'
       }
     }
 
-    stage('Cleanup') {
+    stage('Verify and build') {
       steps {
-        cleanWs cleanWhenAborted: false, cleanWhenFailure: false, cleanWhenNotBuilt: false, cleanWhenUnstable: false
+        sh 'python3 -B -m unittest discover -s scripts -p "test_*.py"'
+        sh './gradlew --no-daemon clean test build'
       }
+    }
+
+    stage('Publish CLI') {
+      steps {
+        sh '''
+          version=$(./gradlew -q appVersion)
+          archive="kastle-${version}.zip"
+          source="engine/build/distributions/$archive"
+          destination="/var/www/kastle-docs/attachments/$archive"
+          test -f "$source"
+          # Do not overwrite an existing release. Publish via a temporary file.
+          temporary=$(sudo mktemp "${destination}.XXXXXX")
+          trap 'sudo rm -f "$temporary"' EXIT HUP INT TERM
+          sudo cp "$source" "$temporary"
+          sudo chmod 644 "$temporary"
+          sudo ln "$temporary" "$destination"
+        '''
+      }
+    }
+
+  }
+
+  post {
+    always {
+      cleanWs()
     }
   }
 }

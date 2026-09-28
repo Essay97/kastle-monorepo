@@ -3,8 +3,6 @@ plugins {
     id("io.deepmedia.tools.deployer") version "0.18.0"
 }
 
-version = "0.1.1"
-
 repositories {
     google()
     mavenCentral()
@@ -53,7 +51,7 @@ deployer {
         auth.password = secret("UPLOAD_PASSWORD")
     }
     localSpec {
-        directory = file("/Users/enrico/maven-local")
+        directory = rootProject.layout.buildDirectory.dir("maven-local").get().asFile
     }
 }
 

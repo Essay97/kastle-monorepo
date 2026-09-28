@@ -2,8 +2,6 @@ plugins {
     application
 }
 
-version = "0.1.0"
-
 application {
     mainClass.set("com.saggiodev.kastle.engine.MainKt")
     applicationName = "kastle"
