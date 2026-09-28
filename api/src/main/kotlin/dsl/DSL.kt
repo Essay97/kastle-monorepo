@@ -16,7 +16,6 @@ annotation class KastleDsl
  * are defined through the [init] function.
  *
  */
-@KastleDsl
 fun game(initialRoomId: String, init: GameScope.() -> Unit): GameConfiguration {
     val scope = GameScope(initialRoomId)
     scope.init()
@@ -458,7 +457,8 @@ class QuestionScope(private val questionId: String) {
     /**
      * Defines the reward that the character awards the player at the end of the dialogue.
      *
-     * If at least one answer is defined, this reward has no effect.
+     * A reward can only be defined on a terminal question, with no answers.
+     * When the dialogue ends, the reward is placed in the player's current room, not in their inventory.
      * The reward is never mandatory.
      */
     fun reward(itemId: String, init: ItemScope.() -> Unit) {
@@ -471,7 +471,7 @@ class QuestionScope(private val questionId: String) {
         question = QuestionDto(
             id = questionId,
             question = text,
-            answers = answers,
+            answers = answers.takeIf { it.isNotEmpty() },
             reward = reward?.id
         ),
         item = reward

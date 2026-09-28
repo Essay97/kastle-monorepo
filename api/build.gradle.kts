@@ -20,6 +20,9 @@ sqldelight {
 }
 
 dependencies {
+    testImplementation(kotlin("test-junit5"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
     api("org.jetbrains.kotlinx:kotlinx-datetime:0.6.2")
     implementation("io.arrow-kt:arrow-core:2.1.0")
     implementation("app.cash.sqldelight:sqlite-driver:2.0.2")
@@ -51,5 +54,15 @@ deployer {
     }
     localSpec {
         directory = file("/Users/enrico/maven-local")
+    }
+}
+
+
+tasks.test {
+    useJUnitPlatform()
+    // Registries are process-wide; each test resets them before and after execution.
+    systemProperty("junit.jupiter.execution.parallel.enabled", "false")
+    testLogging {
+        events("passed", "skipped", "failed")
     }
 }
