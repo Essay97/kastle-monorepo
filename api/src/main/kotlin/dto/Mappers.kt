@@ -46,7 +46,7 @@ internal fun RoomDto.toRoom(): Either<KastleError, Room> = either {
 internal fun ItemDto.toItem(): Either<KastleError, Item> = either {
     val id = ItemId(this@toItem.id).bind()
     val description = description ?: "It's not so clear how this looks..."
-    val matchers = matchers ?: emptyList()
+    val matchers = listOf(name) + matchers.orEmpty()
     if (use != null) {
         StorableItem(
             id = id,
@@ -71,7 +71,7 @@ internal fun CharacterDto.toCharacter(): Either<KastleError, Character> = either
         id = CharacterId(id).bind(),
         name = name,
         description = description ?: "This is nearly unrecognizable",
-        matchers = matchers ?: emptyList(),
+        matchers = listOf(name) + matchers.orEmpty(),
         dialogue = dialogue?.toQuestion()?.bind()
     )
 }

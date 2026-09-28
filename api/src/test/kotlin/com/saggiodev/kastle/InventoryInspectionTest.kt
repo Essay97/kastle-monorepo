@@ -60,16 +60,68 @@ class InventoryInspectionTest : RegistryTest() {
     }
 
     @Test
-    fun `KNOWN BUG - DSL name Key does not supply matcher key or ID`() {
+    fun `DSL item name works without aliases through inspection grab and drop`() {
         val game = TestGame(game("r-start") {
-            room("r-start") { item("i-key") { name = "Key" } }
+            room("r-start") { item("i-key") { name = "Key"; storable = true } }
         })
         val key = Items.getById(itemId("i-key"))!!
-        assertEquals("Key", key.name)
-        assertTrue(key.matchers.isEmpty())
-        for (matcher in listOf("key", "Key", "i-key")) {
-            assertIs<GameRuntimeError.CannotFindInspectable>(game.commands.createInspectCommand(matcher).execute().failure())
+        for (matcher in listOf("key", "Key", " KEY ")) {
+            assertSame(key, game.interactables.getForInspection(matcher).success())
+            assertIs<ConfirmGrab>(game.commands.createGrabCommand(matcher).execute().success())
+            assertSame(key, game.interactables.getForInspection(matcher).success())
+            assertIs<ConfirmDrop>(game.commands.createDropCommand(matcher).execute().success())
         }
+        for (matcher in listOf("i-key", "ke", "keys")) {
+            assertIs<GameRuntimeError.CannotFindInspectable>(game.interactables.getForInspection(matcher).failure())
+        }
+    }
+
+    @Test
+    fun `aliases supplement names and normalize casing and surrounding whitespace`() {
+        val game = TestGame(game("r-start") {
+            room("r-start") {
+                item("i-key") { name = " Brass Key "; matchers(" Golden KEY "); storable = true }
+                character("c-guide") {
+                    name = " Wise Guide "
+                    matchers(" Old FRIEND ")
+                    dialogue { firstQuestion("d-end") { text = "Hello" } }
+                }
+            }
+        })
+        for (matcher in listOf("brass key", " GOLDEN key ")) {
+            assertSame<com.saggiodev.kastle.model.capabilities.Inspectable?>(Items.getById(itemId("i-key")), game.interactables.getForInspection(matcher).success())
+            game.commands.createGrabCommand(matcher).execute().success()
+            game.commands.createDropCommand(matcher).execute().success()
+        }
+        for (matcher in listOf("wise guide", " OLD friend ")) {
+            assertSame<com.saggiodev.kastle.model.capabilities.Inspectable?>(Characters.getById(CharacterId("c-guide").success()), game.interactables.getForInspection(matcher).success())
+            assertEquals(CharacterId("c-guide").success(), game.interactables.getForDialogue(matcher).success())
+        }
+        assertIs<ExecuteDialogue>(game.commands.createTalkCommand(" WISE guide ").execute().success())
+        assertIs<GameRuntimeError.CharacterAlreadyTalked>(game.commands.createTalkCommand("old FRIEND").execute().failure())
+        assertSame(game.start, game.interactables.getForInspection(" ROOM ").success())
+        for (matcher in listOf("brass", "brass  key", "wise", "c-guide")) {
+            assertIs<GameRuntimeError.CannotFindInspectable>(game.interactables.getForInspection(matcher).failure())
+        }
+    }
+
+    @Test
+    fun `character name without aliases supports talk and unnamed entities use default names`() {
+        val game = TestGame(game("r-start") {
+            room("r-start") {
+                item("i-statue") {}
+                character("c-guide") {
+                    name = "Guide"
+                    dialogue { firstQuestion("d-end") {} }
+                }
+                character("c-guard") {}
+            }
+        })
+        assertEquals(CharacterId("c-guide").success(), game.interactables.getForDialogue(" GUIDE ").success())
+        assertIs<ExecuteDialogue>(game.commands.createTalkCommand("guide").execute().success())
+        assertEquals(CharacterId("c-guard").success(), game.interactables.getForDialogue("C-GUARD").success())
+        assertIs<RegularItem>(game.interactables.getForInspection("I-STATUE").success())
+        assertIs<GameRuntimeError.CannotFindStorable>(game.interactables.getForGrab("i-statue").failure())
     }
 
     @Test

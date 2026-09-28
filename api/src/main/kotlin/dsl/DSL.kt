@@ -308,7 +308,10 @@ class CharacterScope(private val characterId: String) {
     private var items: List<ItemDto> = mutableListOf()
 
     /**
-     * Defines the strings that the player can use to reference this character.
+     * Defines additional aliases that the player can use to reference this character.
+     * The [name] is always usable, including its default ID value when no name is set.
+     * Names and aliases match exactly, ignoring case and surrounding whitespace.
+     * Internal whitespace is preserved; partial matches are not supported.
      */
     fun matchers(vararg words: String) {
         matchers = words.asList()
@@ -355,7 +358,10 @@ class ItemScope(private val itemId: String) {
     private var matchers: List<String> = listOf()
 
     /**
-     * Defines the strings that the player can use to reference this item.
+     * Defines additional aliases that the player can use to reference this item.
+     * The [name] is always usable, including its default ID value when no name is set.
+     * Names and aliases match exactly, ignoring case and surrounding whitespace.
+     * Internal whitespace is preserved; partial matches are not supported.
      */
     fun matchers(vararg words: String) {
         matchers = words.asList()
