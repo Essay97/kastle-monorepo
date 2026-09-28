@@ -100,9 +100,8 @@ class DialogueTest : RegistryTest() {
         assertEquals("i-prize", config.items!!.single().id)
         val game = TestGame(config)
         assertIs<StorableItem>(Items.getById(itemId("i-prize")))
-        // Existing RoomScope behavior places reward items in the room before dialogue.
-        // Keep that separate issue visible without changing it as part of terminal mapping.
-        assertEquals(listOf(itemId("i-prize")), game.start.items.toList())
+        assertTrue(config.rooms.single().items.orEmpty().isEmpty())
+        assertTrue(game.start.items.isEmpty())
         assertTrue(game.state.inventory.isEmpty())
     }
 
@@ -139,6 +138,74 @@ class DialogueTest : RegistryTest() {
         assertEquals(if (reward) itemId("i-prize") else null, leaf.reward)
         assertFalse(dialogue.hasNext())
         assertIs<GameRuntimeError.CharacterAlreadyTalked>(game.commands.createTalkCommand("guide").execute().failure())
+    }
+
+    @Test
+    fun `rewarded first question places one collectible reward only after completion`() {
+        assertRewardPlacement(terminalFirst = true)
+    }
+
+    @Test
+    fun `rewarded subsequent question places one collectible reward only after completion`() {
+        assertRewardPlacement(terminalFirst = false)
+    }
+
+    private fun assertRewardPlacement(terminalFirst: Boolean) {
+        val game = TestGame(dialogueConfig(reward = true, terminalFirst = terminalFirst))
+        assertTrue(game.start.items.isEmpty())
+        assertIs<GameRuntimeError.CannotFindStorable>(game.commands.createGrabCommand("prize").execute().failure())
+        val dialogue = assertIs<ExecuteDialogue>(game.commands.createTalkCommand("guide").execute().success()).dialogue
+        val first = dialogue.first()
+        val leaf = if (terminalFirst) first.success() else {
+            first.failure()
+            assertTrue(game.start.items.isEmpty())
+            dialogue.next(0).success()
+        }
+        // Perform the room placement used by the engine's NextActionHandler at a terminal leaf.
+        Rooms.getById(game.state.currentRoom)!!.addItem(assertNotNull(leaf.reward)).success()
+        assertFalse(dialogue.hasNext())
+        assertEquals(listOf(itemId("i-prize")), game.start.items.toList())
+        assertTrue(game.state.inventory.isEmpty())
+        game.commands.createGrabCommand("prize").execute().success()
+        assertEquals(listOf(itemId("i-prize")), game.state.inventory.toList())
+        assertTrue(game.start.items.isEmpty())
+        assertIs<GameRuntimeError.CharacterAlreadyTalked>(game.commands.createTalkCommand("guide").execute().failure())
+        assertTrue(game.start.items.isEmpty())
+        assertIs<GameRuntimeError.CannotFindStorable>(game.commands.createGrabCommand("prize").execute().failure())
+    }
+
+    @Test
+    fun `only selected branch reward is placed while ordinary items are present initially`() {
+        val config = game("r-start") {
+            room("r-start") {
+                item("i-before") { storable = true }
+                character("c-guide") {
+                    matchers("guide")
+                    dialogue {
+                        firstQuestion("d-choice") {
+                            answer { text = "Gold"; nextQuestion = "d-gold" }
+                            answer { text = "Silver"; nextQuestion = "d-silver" }
+                        }
+                        question("d-gold") { reward("i-gold") { storable = true } }
+                        question("d-silver") { reward("i-silver") { storable = true } }
+                    }
+                }
+                item("i-after") { storable = true }
+            }
+        }
+        assertEquals(setOf("i-before", "i-after", "i-gold", "i-silver"), config.items!!.map { it.id }.toSet())
+        assertEquals(listOf("i-before", "i-after"), config.rooms.single().items)
+        val game = TestGame(config)
+        assertNotNull(Items.getById(itemId("i-gold")))
+        assertNotNull(Items.getById(itemId("i-silver")))
+        assertEquals(listOf(itemId("i-before"), itemId("i-after")), game.start.items.toList())
+        val dialogue = assertIs<ExecuteDialogue>(game.commands.createTalkCommand("guide").execute().success()).dialogue
+        dialogue.first().failure()
+        val leaf = dialogue.next(1).success()
+        assertEquals(itemId("i-silver"), leaf.reward)
+        Rooms.getById(game.state.currentRoom)!!.addItem(assertNotNull(leaf.reward)).success()
+        assertEquals(listOf(itemId("i-before"), itemId("i-after"), itemId("i-silver")), game.start.items.toList())
+        assertTrue(game.state.inventory.isEmpty())
     }
 
     @Test

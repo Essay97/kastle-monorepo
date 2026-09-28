@@ -169,6 +169,7 @@ class RoomScope(private val roomId: String) {
     private var east: DirectionDto? = null
     private var west: DirectionDto? = null
     private val items: MutableList<ItemDto> = mutableListOf()
+    private val initialItemIds: MutableList<String> = mutableListOf()
     private val characters: MutableList<CharacterDto> = mutableListOf()
 
     /**
@@ -219,7 +220,7 @@ class RoomScope(private val roomId: String) {
         room = RoomDto(
             name = name,
             id = roomId,
-            items = items.map { it.id },
+            items = initialItemIds.toList(),
             characters = characters.map { it.id },
             description = description,
             links = LinksDto(north, south, east, west)
@@ -254,6 +255,7 @@ class RoomScope(private val roomId: String) {
         val scope = ItemScope(itemId)
         scope.init()
         items += scope.build()
+        initialItemIds += itemId
     }
 
     class BuildResult(val room: RoomDto, val items: List<ItemDto>, val characters: List<CharacterDto>)
@@ -459,6 +461,7 @@ class QuestionScope(private val questionId: String) {
      *
      * A reward can only be defined on a terminal question, with no answers.
      * When the dialogue ends, the reward is placed in the player's current room, not in their inventory.
+     * Defining a reward registers the item but does not place it in the room initially.
      * The reward is never mandatory.
      */
     fun reward(itemId: String, init: ItemScope.() -> Unit) {
