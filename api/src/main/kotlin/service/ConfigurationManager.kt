@@ -7,13 +7,11 @@ import com.saggiodev.kastle.dto.*
 import com.saggiodev.kastle.error.KastleError
 import com.saggiodev.kastle.error.SerializationError
 import com.saggiodev.kastle.model.*
-import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
-import kotlin.streams.toList
 
 interface GameProvider {
     fun provideConfiguration(): GameConfiguration
@@ -39,6 +37,7 @@ class ConfigurationManager {
         }
 
         val config = gameProvider.provideConfiguration()
+        config.validateDefinition().bind()
 
         loadCharacters(config.characters ?: emptyList()).bind()
         loadItems(config.items ?: emptyList()).bind()

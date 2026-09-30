@@ -29,10 +29,11 @@ class Install : CliktCommand() {
     }
 
     override fun run() {
-        installationManager.installGame(gameName ?: gamePath.nameWithoutExtension, gamePath, gameClass).getOrElse {
+        val installedName = gameName ?: gamePath.nameWithoutExtension
+        installationManager.installGame(installedName, gamePath, gameClass).getOrElse {
             echo(it.description, err = true)
             throw ProgramResult(2)
         }
-        echo("$gameName installed correctly.")
+        echo("$installedName installed correctly.")
     }
 }
