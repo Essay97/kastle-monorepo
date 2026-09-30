@@ -2,6 +2,7 @@ package com.saggiodev.kastle
 
 import com.saggiodev.kastle.error.*
 import com.saggiodev.kastle.model.*
+import com.saggiodev.kastle.model.commands.CommandFactory
 import com.saggiodev.kastle.model.nextaction.*
 import com.saggiodev.kastle.service.*
 import org.junit.jupiter.api.Test
@@ -82,16 +83,48 @@ class MovementTest : RegistryTest() {
         game.inventory.addItem(itemId(key)).success()
         assertEquals(listOf(itemId(key)), game.state.inventory)
         val opened = assertIs<ConfirmOpen>(game.commands.createOpenCommand(Direction.NORTH).execute().success())
-        // KNOWN BUG: the manager returns current room, so both confirmation endpoints are identical.
         assertSame(game.start, opened.source)
-        assertSame(game.start, opened.destination)
+        assertSame(game.end, opened.destination)
         game.movement.moveNorth().success()
         game.movement.moveSouth().success()
         val closed = assertIs<ConfirmClose>(game.commands.createCloseCommand(Direction.NORTH).execute().success())
         assertSame(game.start, closed.source)
-        assertSame(game.start, closed.destination)
+        assertSame(game.end, closed.destination)
         assertFalse(game.dungeon.getValue(game.start.id).north!!.open)
         assertIs<GameRuntimeError.TraversingClosedLink>(game.movement.moveNorth().failure())
+    }
+
+    @ParameterizedTest
+    @EnumSource(Direction::class)
+    fun `open and close confirm both endpoints without moving in every direction`(direction: Direction) {
+        val game = testGame(open = false)
+        game.inventory.addItem(itemId("i-a")).success()
+        val link = game.dungeon.getValue(game.start.id).north!!
+        val node = when (direction) {
+            Direction.NORTH -> DungeonNode(north = link)
+            Direction.SOUTH -> DungeonNode(south = link)
+            Direction.EAST -> DungeonNode(east = link)
+            Direction.WEST -> DungeonNode(west = link)
+        }
+        val movement = MovementManager(game.state, mapOf(
+            game.start.id to node,
+            game.end.id to DungeonNode()
+        )).success()
+        val commands = CommandFactory(
+            movement, game.run, game.interactables, game.inventory, game.state
+        )
+
+        val opened = assertIs<ConfirmOpen>(commands.createOpenCommand(direction).execute().success())
+        assertSame(game.start, opened.source)
+        assertSame(game.end, opened.destination)
+        assertEquals(game.start.id, game.state.currentRoom)
+        assertTrue(link.open)
+
+        val closed = assertIs<ConfirmClose>(commands.createCloseCommand(direction).execute().success())
+        assertSame(game.start, closed.source)
+        assertSame(game.end, closed.destination)
+        assertEquals(game.start.id, game.state.currentRoom)
+        assertFalse(link.open)
     }
 
     @Test

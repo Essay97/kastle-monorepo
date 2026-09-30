@@ -57,6 +57,7 @@ class MovementManager private constructor(
         else -> GameRuntimeError("Trying to map unknown direction")
     }
 
+    /** Opens the directional link and returns its destination without moving the player. */
     fun openNorth(): Either<GameRuntimeError, Room> = open(DungeonNode::north)
     fun openSouth(): Either<GameRuntimeError, Room> = open(DungeonNode::south)
     fun openEast(): Either<GameRuntimeError, Room> = open(DungeonNode::east)
@@ -72,9 +73,10 @@ class MovementManager private constructor(
             GameRuntimeError.NoOpenTriggerOwned(currentRoom.name, destinationRoom.name)
         }
         link.open = true
-        currentRoom
+        destinationRoom
     }
 
+    /** Closes the directional link and returns its destination without moving the player. */
     fun closeNorth(): Either<GameRuntimeError, Room> = close(DungeonNode::north)
     fun closeSouth(): Either<GameRuntimeError, Room> = close(DungeonNode::south)
     fun closeEast(): Either<GameRuntimeError, Room> = close(DungeonNode::east)
@@ -90,6 +92,6 @@ class MovementManager private constructor(
             GameRuntimeError.NoCloseTriggerOwned(currentRoom.name, destinationRoom.name)
         }
         link.open = false
-        currentRoom
+        destinationRoom
     }
 }
