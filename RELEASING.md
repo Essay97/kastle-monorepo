@@ -4,7 +4,8 @@
 
 `gradle.properties` is the source of truth for the repository version. Root, API,
 CLI and sample build artifacts inherit it. `./gradlew -q appVersion` prints it.
-The current development version is **0.1.2-SNAPSHOT**; this is not a published release.
+The release version is **0.1.2**, tagged `v0.1.2`. The tag identifies the source;
+API and CLI availability must be verified separately after Jenkins publication.
 
 Use `MAJOR.MINOR.PATCH-SNAPSHOT` during development, and `MAJOR.MINOR.PATCH` for
 releases tagged `vMAJOR.MINOR.PATCH`. Increment patch for compatible fixes and
