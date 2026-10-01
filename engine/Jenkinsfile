@@ -43,11 +43,11 @@ pipeline {
           destination="/var/www/kastle-docs/attachments/$archive"
           test -f "$source"
           # Do not overwrite an existing release. Publish via a temporary file.
-          temporary=$(sudo mktemp "${destination}.XXXXXX")
-          trap 'sudo rm -f "$temporary"' EXIT HUP INT TERM
-          sudo cp "$source" "$temporary"
-          sudo chmod 644 "$temporary"
-          sudo ln "$temporary" "$destination"
+          temporary=$(mktemp "${destination}.XXXXXX")
+          trap 'rm -f "$temporary"' EXIT HUP INT TERM
+          cp "$source" "$temporary"
+          chmod 644 "$temporary"
+          ln "$temporary" "$destination"
         '''
       }
     }
